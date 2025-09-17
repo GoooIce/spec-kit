@@ -62,6 +62,9 @@ AI_CHOICES = {
 # Add script type choices
 SCRIPT_TYPE_CHOICES = {"sh": "POSIX Shell (bash/zsh)", "ps": "PowerShell"}
 
+# Add language choices
+LANGUAGE_CHOICES = {"en": "English", "zh": "中文 (Chinese)"}
+
 # Claude CLI local installation path after migrate-installer
 CLAUDE_LOCAL_PATH = Path.home() / ".claude" / "local" / "claude"
 
@@ -416,7 +419,7 @@ def init_git_repo(project_path: Path, quiet: bool = False) -> bool:
         os.chdir(original_cwd)
 
 
-def download_template_from_github(ai_assistant: str, download_dir: Path, *, script_type: str = "sh", verbose: bool = True, show_progress: bool = True, client: httpx.Client = None, debug: bool = False) -> Tuple[Path, dict]:
+def download_template_from_github(ai_assistant: str, download_dir: Path, *, script_type: str = "sh", language: str = "en", verbose: bool = True, show_progress: bool = True, client: httpx.Client = None, debug: bool = False) -> Tuple[Path, dict]:
     repo_owner = "github"
     repo_name = "spec-kit"
     if client is None:
@@ -444,7 +447,7 @@ def download_template_from_github(ai_assistant: str, download_dir: Path, *, scri
         raise typer.Exit(1)
     
     # Find the template asset for the specified AI assistant
-    pattern = f"spec-kit-template-{ai_assistant}-{script_type}"
+    pattern = f"spec-kit-template-{ai_assistant}-{script_type}-{language}"
     matching_assets = [
         asset for asset in release_data.get("assets", [])
         if pattern in asset["name"] and asset["name"].endswith(".zip")
@@ -517,7 +520,7 @@ def download_template_from_github(ai_assistant: str, download_dir: Path, *, scri
     return zip_path, metadata
 
 
-def download_and_extract_template(project_path: Path, ai_assistant: str, script_type: str, is_current_dir: bool = False, *, verbose: bool = True, tracker: StepTracker | None = None, client: httpx.Client = None, debug: bool = False) -> Path:
+def download_and_extract_template(project_path: Path, ai_assistant: str, script_type: str, language: str = "en", is_current_dir: bool = False, *, verbose: bool = True, tracker: StepTracker | None = None, client: httpx.Client = None, debug: bool = False) -> Path:
     """Download the latest release and extract it to create a new project.
     Returns project_path. Uses tracker if provided (with keys: fetch, download, extract, cleanup)
     """
@@ -531,6 +534,7 @@ def download_and_extract_template(project_path: Path, ai_assistant: str, script_
             ai_assistant,
             current_dir,
             script_type=script_type,
+            language=language,
             verbose=verbose and tracker is None,
             show_progress=(tracker is None),
             client=client,
@@ -724,6 +728,7 @@ def init(
     project_name: str = typer.Argument(None, help="Name for your new project directory (optional if using --here)"),
     ai_assistant: str = typer.Option(None, "--ai", help="AI assistant to use: claude, gemini, copilot, or cursor"),
     script_type: str = typer.Option(None, "--script", help="Script type to use: sh or ps"),
+    language: str = typer.Option(None, "--lang", help="Template language to use: en (English) or zh (Chinese)"),
     ignore_agent_tools: bool = typer.Option(False, "--ignore-agent-tools", help="Skip checks for AI agent tools like Claude Code"),
     no_git: bool = typer.Option(False, "--no-git", help="Skip git repository initialization"),
     here: bool = typer.Option(False, "--here", help="Initialize project in the current directory instead of creating a new one"),
@@ -744,11 +749,11 @@ def init(
     Examples:
         specify init my-project
         specify init my-project --ai claude
-        specify init my-project --ai gemini
-        specify init my-project --ai copilot --no-git
+        specify init my-project --ai gemini --lang zh
+        specify init my-project --ai copilot --no-git --lang en
         specify init my-project --ai cursor
         specify init --ignore-agent-tools my-project
-        specify init --here --ai claude
+        specify init --here --ai claude --lang zh
         specify init --here
     """
     # Show banner first
@@ -846,8 +851,24 @@ def init(
         else:
             selected_script = default_script
     
+    # Determine language (explicit, interactive, or default)
+    if language:
+        if language not in LANGUAGE_CHOICES:
+            console.print(f"[red]Error:[/red] Invalid language '{language}'. Choose from: {', '.join(LANGUAGE_CHOICES.keys())}")
+            raise typer.Exit(1)
+        selected_language = language
+    else:
+        # Default to English
+        default_language = "en"
+        # Provide interactive selection if stdin is a TTY
+        if sys.stdin.isatty():
+            selected_language = select_with_arrows(LANGUAGE_CHOICES, "Choose template language", default_language)
+        else:
+            selected_language = default_language
+    
     console.print(f"[cyan]Selected AI assistant:[/cyan] {selected_ai}")
     console.print(f"[cyan]Selected script type:[/cyan] {selected_script}")
+    console.print(f"[cyan]Selected language:[/cyan] {selected_language}")
     
     # Download and set up project
     # New tree-based progress (no emojis); include earlier substeps
@@ -883,7 +904,7 @@ def init(
             local_ssl_context = ssl_context if verify else False
             local_client = httpx.Client(verify=local_ssl_context)
 
-            download_and_extract_template(project_path, selected_ai, selected_script, here, verbose=False, tracker=tracker, client=local_client, debug=debug)
+            download_and_extract_template(project_path, selected_ai, selected_script, selected_language, here, verbose=False, tracker=tracker, client=local_client, debug=debug)
 
             # Ensure scripts are executable (POSIX)
             ensure_executable_scripts(project_path, tracker=tracker)
