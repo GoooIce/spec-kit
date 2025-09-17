@@ -420,7 +420,7 @@ def init_git_repo(project_path: Path, quiet: bool = False) -> bool:
 
 
 def download_template_from_github(ai_assistant: str, download_dir: Path, *, script_type: str = "sh", language: str = "en", verbose: bool = True, show_progress: bool = True, client: httpx.Client = None, debug: bool = False) -> Tuple[Path, dict]:
-    repo_owner = "github"
+    repo_owner = "GoooIce"
     repo_name = "spec-kit"
     if client is None:
         client = httpx.Client(verify=ssl_context)

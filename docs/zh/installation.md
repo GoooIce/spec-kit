@@ -15,13 +15,13 @@
 开始的最简单方法是初始化新项目：
 
 ```bash
-uvx --from git+https://github.com/github/spec-kit.git specify init <项目名称>
+uvx --from git+https://github.com/GoooIce/spec-kit.git specify init <项目名称>
 ```
 
 或在当前目录中初始化：
 
 ```bash
-uvx --from git+https://github.com/github/spec-kit.git specify init --here
+uvx --from git+https://github.com/GoooIce/spec-kit.git specify init --here
 ```
 
 ### 指定AI代理
@@ -29,9 +29,9 @@ uvx --from git+https://github.com/github/spec-kit.git specify init --here
 您可以在初始化期间主动指定您的AI代理：
 
 ```bash
-uvx --from git+https://github.com/github/spec-kit.git specify init <项目名称> --ai claude
-uvx --from git+https://github.com/github/spec-kit.git specify init <项目名称> --ai gemini
-uvx --from git+https://github.com/github/spec-kit.git specify init <项目名称> --ai copilot
+uvx --from git+https://github.com/GoooIce/spec-kit.git specify init <项目名称> --ai claude
+uvx --from git+https://github.com/GoooIce/spec-kit.git specify init <项目名称> --ai gemini
+uvx --from git+https://github.com/GoooIce/spec-kit.git specify init <项目名称> --ai copilot
 ```
 
 ### 指定脚本类型（Shell vs PowerShell）
@@ -45,8 +45,8 @@ uvx --from git+https://github.com/github/spec-kit.git specify init <项目名称
 
 强制特定脚本类型：
 ```bash
-uvx --from git+https://github.com/github/spec-kit.git specify init <项目名称> --script sh
-uvx --from git+https://github.com/github/spec-kit.git specify init <项目名称> --script ps
+uvx --from git+https://github.com/GoooIce/spec-kit.git specify init <项目名称> --script sh
+uvx --from git+https://github.com/GoooIce/spec-kit.git specify init <项目名称> --script ps
 ```
 
 ### 忽略代理工具检查
@@ -54,7 +54,7 @@ uvx --from git+https://github.com/github/spec-kit.git specify init <项目名称
 如果您希望获取模板而不检查正确的工具：
 
 ```bash
-uvx --from git+https://github.com/github/spec-kit.git specify init <项目名称> --ai claude --ignore-agent-tools
+uvx --from git+https://github.com/GoooIce/spec-kit.git specify init <项目名称> --ai claude --ignore-agent-tools
 ```
 
 ## 验证

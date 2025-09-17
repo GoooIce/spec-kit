@@ -7,7 +7,7 @@
 ## 1. 克隆和切换分支
 
 ```bash
-git clone https://github.com/github/spec-kit.git
+git clone https://github.com/GoooIce/spec-kit.git
 cd spec-kit
 # 在功能分支上工作
 git checkout -b your-feature-branch
@@ -60,7 +60,7 @@ uvx --from . specify init demo-uvx --ai copilot --ignore-agent-tools --script sh
 ```bash
 # 首先推送您的工作分支
 git push origin your-feature-branch
-uvx --from git+https://github.com/github/spec-kit.git@your-feature-branch specify init demo-branch-test --script ps
+uvx --from git+https://github.com/GoooIce/spec-kit.git@your-feature-branch specify init demo-branch-test --script ps
 ```
 
 ### 4a. 绝对路径uvx（从任何地方运行）

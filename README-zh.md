@@ -41,7 +41,7 @@
 根据您使用的编码代理初始化您的项目：
 
 ```bash
-uvx --from git+https://github.com/github/spec-kit.git specify init <项目名称>
+uvx --from git+https://github.com/GoooIce/spec-kit.git specify init <项目名称>
 ```
 
 ### 2. 创建规范

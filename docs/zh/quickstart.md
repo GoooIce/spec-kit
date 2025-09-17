@@ -11,13 +11,13 @@
 根据您使用的编程代理初始化项目：
 
 ```bash
-uvx --from git+https://github.com/github/spec-kit.git specify init <项目名称>
+uvx --from git+https://github.com/GoooIce/spec-kit.git specify init <项目名称>
 ```
 
 明确选择脚本类型（可选）：
 ```bash
-uvx --from git+https://github.com/github/spec-kit.git specify init <项目名称> --script ps  # 强制PowerShell
-uvx --from git+https://github.com/github/spec-kit.git specify init <项目名称> --script sh  # 强制POSIX shell
+uvx --from git+https://github.com/GoooIce/spec-kit.git specify init <项目名称> --script ps  # 强制PowerShell
+uvx --from git+https://github.com/GoooIce/spec-kit.git specify init <项目名称> --script sh  # 强制POSIX shell
 ```
 
 ### 2. 创建规范
