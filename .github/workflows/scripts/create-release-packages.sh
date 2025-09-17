@@ -2,16 +2,17 @@
 set -euo pipefail
 
 # create-release-packages.sh (workflow-local)
-# Build Spec Kit template release archives for each supported AI assistant and script type.
+# Build Spec Kit template release archives for each supported AI assistant, script type, and language.
 # Usage: .github/workflows/scripts/create-release-packages.sh <version>
 #   Version argument should include leading 'v'.
-#   Optionally set AGENTS and/or SCRIPTS env vars to limit what gets built.
-#     AGENTS  : space or comma separated subset of: claude gemini copilot (default: all)
-#     SCRIPTS : space or comma separated subset of: sh ps (default: both)
+#   Optionally set AGENTS, SCRIPTS, and/or LANGUAGES env vars to limit what gets built.
+#     AGENTS    : space or comma separated subset of: claude gemini copilot cursor (default: all)
+#     SCRIPTS   : space or comma separated subset of: sh ps (default: both)
+#     LANGUAGES : space or comma separated subset of: en zh (default: both)
 #   Examples:
-#     AGENTS=claude SCRIPTS=sh $0 v0.2.0
-#     AGENTS="copilot,gemini" $0 v0.2.0
-#     SCRIPTS=ps $0 v0.2.0
+#     AGENTS=claude SCRIPTS=sh LANGUAGES=zh $0 v0.2.0
+#     AGENTS="copilot,gemini" LANGUAGES=en $0 v0.2.0
+#     SCRIPTS=ps LANGUAGES="en,zh" $0 v0.2.0
 
 if [[ $# -ne 1 ]]; then
   echo "Usage: $0 <version-with-v-prefix>" >&2
@@ -35,7 +36,7 @@ rewrite_paths() {
 }
 
 generate_commands() {
-  local agent=$1 ext=$2 arg_format=$3 output_dir=$4 script_variant=$5
+  local agent=$1 ext=$2 arg_format=$3 output_dir=$4 script_variant=$5 language=$6
   mkdir -p "$output_dir"
   for template in templates/commands/*.md; do
     [[ -f "$template" ]] || continue
@@ -81,9 +82,9 @@ generate_commands() {
 }
 
 build_variant() {
-  local agent=$1 script=$2
-  local base_dir="sdd-${agent}-package-${script}"
-  echo "Building $agent ($script) package..."
+  local agent=$1 script=$2 language=$3
+  local base_dir="sdd-${agent}-package-${script}-${language}"
+  echo "Building $agent ($script, $language) package..."
   mkdir -p "$base_dir"
   
   # Copy base structure but filter scripts by variant
@@ -109,7 +110,17 @@ build_variant() {
     esac
   fi
   
-  [[ -d templates ]] && { mkdir -p "$SPEC_DIR/templates"; find templates -type f -not -path "templates/commands/*" -exec cp --parents {} "$SPEC_DIR"/ \; ; echo "Copied templates -> .specify/templates"; }
+  # Copy language-specific templates
+  if [[ -d templates ]]; then
+    mkdir -p "$SPEC_DIR/templates"
+    # Copy language-specific templates
+    if [[ -d "templates/$language" ]]; then
+      cp -r "templates/$language"/* "$SPEC_DIR/templates/"
+      echo "Copied templates/$language -> .specify/templates"
+    fi
+    # Copy common templates (not in language directories)
+    find templates -maxdepth 1 -type f -not -path "templates/commands/*" -exec cp {} "$SPEC_DIR/templates/" \; 2>/dev/null || true
+  fi
   # Inject variant into plan-template.md within .specify/templates if present
   local plan_tpl="$base_dir/.specify/templates/plan-template.md"
   if [[ -f "$plan_tpl" ]]; then
@@ -132,25 +143,26 @@ build_variant() {
   case $agent in
     claude)
       mkdir -p "$base_dir/.claude/commands"
-      generate_commands claude md "\$ARGUMENTS" "$base_dir/.claude/commands" "$script" ;;
+      generate_commands claude md "\$ARGUMENTS" "$base_dir/.claude/commands" "$script" "$language" ;;
     gemini)
       mkdir -p "$base_dir/.gemini/commands"
-      generate_commands gemini toml "{{args}}" "$base_dir/.gemini/commands" "$script"
+      generate_commands gemini toml "{{args}}" "$base_dir/.gemini/commands" "$script" "$language"
       [[ -f agent_templates/gemini/GEMINI.md ]] && cp agent_templates/gemini/GEMINI.md "$base_dir/GEMINI.md" ;;
     copilot)
       mkdir -p "$base_dir/.github/prompts"
-      generate_commands copilot prompt.md "\$ARGUMENTS" "$base_dir/.github/prompts" "$script" ;;
+      generate_commands copilot prompt.md "\$ARGUMENTS" "$base_dir/.github/prompts" "$script" "$language" ;;
     cursor)
       mkdir -p "$base_dir/.cursor/commands"
-      generate_commands cursor md "\$ARGUMENTS" "$base_dir/.cursor/commands" "$script" ;;
+      generate_commands cursor md "\$ARGUMENTS" "$base_dir/.cursor/commands" "$script" "$language" ;;
   esac
-  ( cd "$base_dir" && zip -r "../spec-kit-template-${agent}-${script}-${NEW_VERSION}.zip" . )
-  echo "Created spec-kit-template-${agent}-${script}-${NEW_VERSION}.zip"
+  ( cd "$base_dir" && zip -r "../spec-kit-template-${agent}-${script}-${language}-${NEW_VERSION}.zip" . )
+  echo "Created spec-kit-template-${agent}-${script}-${language}-${NEW_VERSION}.zip"
 }
 
 # Determine agent list
 ALL_AGENTS=(claude gemini copilot cursor)
 ALL_SCRIPTS=(sh ps)
+ALL_LANGUAGES=(en zh)
 
 norm_list() {
   # convert comma+space separated -> space separated unique while preserving order of first occurrence
@@ -158,8 +170,17 @@ norm_list() {
 }
 
 validate_subset() {
-  local type=$1; shift; local -n allowed=$1; shift; local items=($@)
+  local type=$1; shift; local allowed_name=$1; shift; local items=($@)
   local ok=1
+  
+  # Get the allowed values based on the array name
+  case $allowed_name in
+    ALL_AGENTS) local allowed=(${ALL_AGENTS[@]}) ;;
+    ALL_SCRIPTS) local allowed=(${ALL_SCRIPTS[@]}) ;;
+    ALL_LANGUAGES) local allowed=(${ALL_LANGUAGES[@]}) ;;
+    *) echo "Error: unknown allowed array '$allowed_name'" >&2; return 1 ;;
+  esac
+  
   for it in "${items[@]}"; do
     local found=0
     for a in "${allowed[@]}"; do [[ $it == $a ]] && { found=1; break; }; done
@@ -185,12 +206,22 @@ else
   SCRIPT_LIST=(${ALL_SCRIPTS[@]})
 fi
 
+if [[ -n ${LANGUAGES:-} ]]; then
+  LANGUAGE_LIST=($(printf '%s' "$LANGUAGES" | norm_list))
+  validate_subset language ALL_LANGUAGES "${LANGUAGE_LIST[@]}" || exit 1
+else
+  LANGUAGE_LIST=(${ALL_LANGUAGES[@]})
+fi
+
 echo "Agents: ${AGENT_LIST[*]}"
 echo "Scripts: ${SCRIPT_LIST[*]}"
+echo "Languages: ${LANGUAGE_LIST[*]}"
 
 for agent in "${AGENT_LIST[@]}"; do
   for script in "${SCRIPT_LIST[@]}"; do
-    build_variant "$agent" "$script"
+    for language in "${LANGUAGE_LIST[@]}"; do
+      build_variant "$agent" "$script" "$language"
+    done
   done
 done
 
