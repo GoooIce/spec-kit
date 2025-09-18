@@ -110,13 +110,20 @@ build_variant() {
     esac
   fi
   
-  # Copy language-specific templates
+  # Copy language-specific templates (excluding commands directory)
   if [[ -d templates ]]; then
     mkdir -p "$SPEC_DIR/templates"
-    # Copy language-specific templates
+    # Copy language-specific templates, excluding commands directory
     if [[ -d "templates/$language" ]]; then
-      cp -r "templates/$language"/* "$SPEC_DIR/templates/"
-      echo "Copied templates/$language -> .specify/templates"
+      for item in "templates/$language"/*; do
+        [[ -e "$item" ]] || continue
+        # Skip commands directory
+        if [[ -d "$item" && $(basename "$item") == "commands" ]]; then
+          continue
+        fi
+        cp -r "$item" "$SPEC_DIR/templates/"
+      done
+      echo "Copied templates/$language -> .specify/templates (excluding commands)"
     fi
     # Copy common templates (not in language directories)
     find templates -maxdepth 1 -type f -exec cp {} "$SPEC_DIR/templates/" \; 2>/dev/null || true
