@@ -38,7 +38,7 @@ rewrite_paths() {
 generate_commands() {
   local agent=$1 ext=$2 arg_format=$3 output_dir=$4 script_variant=$5 language=$6
   mkdir -p "$output_dir"
-  for template in templates/commands/*.md; do
+  for template in templates/$language/commands/*.md; do
     [[ -f "$template" ]] || continue
     local name description script_command body
     name=$(basename "$template" .md)
@@ -119,7 +119,7 @@ build_variant() {
       echo "Copied templates/$language -> .specify/templates"
     fi
     # Copy common templates (not in language directories)
-    find templates -maxdepth 1 -type f -not -path "templates/commands/*" -exec cp {} "$SPEC_DIR/templates/" \; 2>/dev/null || true
+    find templates -maxdepth 1 -type f -exec cp {} "$SPEC_DIR/templates/" \; 2>/dev/null || true
   fi
   # Inject variant into plan-template.md within .specify/templates if present
   local plan_tpl="$base_dir/.specify/templates/plan-template.md"
