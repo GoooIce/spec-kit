@@ -49,21 +49,40 @@ import readchar
 import ssl
 import truststore
 
+# Import i18n module for translations
+from specify_cli.i18n import t, set_language, get_language
+
 ssl_context = truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
 client = httpx.Client(verify=ssl_context)
 
 # Constants
-AI_CHOICES = {
-    "copilot": "GitHub Copilot",
-    "claude": "Claude Code",
-    "gemini": "Gemini CLI",
-    "cursor": "Cursor"
-}
-# Add script type choices
-SCRIPT_TYPE_CHOICES = {"sh": "POSIX Shell (bash/zsh)", "ps": "PowerShell"}
+def get_ai_choices():
+    """Get AI assistant choices with translations."""
+    return {
+        "copilot": t("ai_assistants.copilot"),
+        "claude": t("ai_assistants.claude"),
+        "gemini": t("ai_assistants.gemini"),
+        "cursor": t("ai_assistants.cursor")
+    }
 
-# Add language choices
-LANGUAGE_CHOICES = {"en": "English", "zh": "中文 (Chinese)"}
+def get_script_type_choices():
+    """Get script type choices with translations."""
+    return {
+        "sh": t("script_types.sh"),
+        "ps": t("script_types.ps")
+    }
+
+def get_language_choices():
+    """Get language choices with translations."""
+    return {
+        "en": t("languages.en"),
+        "zh": t("languages.zh")
+    }
+
+# Legacy constants for backward compatibility
+AI_CHOICES = get_ai_choices()
+SCRIPT_TYPE_CHOICES = get_script_type_choices()
+LANGUAGE_CHOICES = get_language_choices()
 
 # Claude CLI local installation path after migrate-installer
 CLAUDE_LOCAL_PATH = Path.home() / ".claude" / "local" / "claude"
@@ -78,7 +97,11 @@ BANNER = """
 ╚══════╝╚═╝     ╚══════╝ ╚═════╝╚═╝╚═╝        ╚═╝   
 """
 
-TAGLINE = "Spec-Driven Development Toolkit"
+def get_tagline():
+    """Get tagline with translation."""
+    return t("tagline")
+
+TAGLINE = get_tagline()
 class StepTracker:
     """Track and render hierarchical steps without emojis, similar to Claude Code tree output.
     Supports live auto-refresh via an attached refresh callback.
@@ -232,7 +255,7 @@ def select_with_arrows(options: dict, prompt_text: str = "Select an option", def
                 table.add_row(" ", f"[white]{key}: {options[key]}[/white]")
         
         table.add_row("", "")
-        table.add_row("", "[dim]Use ↑/↓ to navigate, Enter to select, Esc to cancel[/dim]")
+        table.add_row("", f"[dim]{t('selection.navigation_help')}[/dim]")
         
         return Panel(
             table,
@@ -257,19 +280,19 @@ def select_with_arrows(options: dict, prompt_text: str = "Select an option", def
                         selected_key = option_keys[selected_index]
                         break
                     elif key == 'escape':
-                        console.print("\n[yellow]Selection cancelled[/yellow]")
+                        console.print(f"\n[yellow]{t('common.selection_cancelled')}[/yellow]")
                         raise typer.Exit(1)
                     
                     live.update(create_selection_panel(), refresh=True)
 
                 except KeyboardInterrupt:
-                    console.print("\n[yellow]Selection cancelled[/yellow]")
+                    console.print(f"\n[yellow]{t('common.selection_cancelled')}[/yellow]")
                     raise typer.Exit(1)
 
     run_selection_loop()
 
     if selected_key is None:
-        console.print("\n[red]Selection failed.[/red]")
+        console.print(f"\n[red]{t('common.selection_failed')}[/red]")
         raise typer.Exit(1)
 
     # Suppress explicit selection print; tracker / later logic will report consolidated status
@@ -321,7 +344,7 @@ def callback(ctx: typer.Context):
     # (help is handled by BannerGroup)
     if ctx.invoked_subcommand is None and "--help" not in sys.argv and "-h" not in sys.argv:
         show_banner()
-        console.print(Align.center("[dim]Run 'specify --help' for usage information[/dim]"))
+        console.print(Align.center(f"[dim]{t('banner.help_text')}[/dim]"))
         console.print()
 
 
@@ -336,10 +359,10 @@ def run_command(cmd: list[str], check_return: bool = True, capture: bool = False
             return None
     except subprocess.CalledProcessError as e:
         if check_return:
-            console.print(f"[red]Error running command:[/red] {' '.join(cmd)}")
-            console.print(f"[red]Exit code:[/red] {e.returncode}")
+            console.print(f"[red]{t('errors.command_error', command=' '.join(cmd))}[/red]")
+            console.print(f"[red]{t('errors.exit_code', code=e.returncode)}[/red]")
             if hasattr(e, 'stderr') and e.stderr:
-                console.print(f"[red]Error output:[/red] {e.stderr}")
+                console.print(f"[red]{t('errors.error_output', output=e.stderr)}[/red]")
             raise
         return None
 
@@ -347,10 +370,10 @@ def run_command(cmd: list[str], check_return: bool = True, capture: bool = False
 def check_tool_for_tracker(tool: str, install_hint: str, tracker: StepTracker) -> bool:
     """Check if a tool is installed and update tracker."""
     if shutil.which(tool):
-        tracker.complete(tool, "available")
+        tracker.complete(tool, t("common.available"))
         return True
     else:
-        tracker.error(tool, f"not found - {install_hint}")
+        tracker.error(tool, f"{t('common.not_found')} - {install_hint}")
         return False
 
 
@@ -369,8 +392,8 @@ def check_tool(tool: str, install_hint: str) -> bool:
     if shutil.which(tool):
         return True
     else:
-        console.print(f"[yellow]⚠️  {tool} not found[/yellow]")
-        console.print(f"   Install with: [cyan]{install_hint}[/cyan]")
+        console.print(f"[yellow]⚠️  {t('tools.not_found_template', tool=tool)}[/yellow]")
+        console.print(f"   {t('tools.install_with', hint=install_hint)}")
         return False
 
 
@@ -403,17 +426,17 @@ def init_git_repo(project_path: Path, quiet: bool = False) -> bool:
         original_cwd = Path.cwd()
         os.chdir(project_path)
         if not quiet:
-            console.print("[cyan]Initializing git repository...[/cyan]")
+            console.print(f"[cyan]{t('git.initializing')}[/cyan]")
         subprocess.run(["git", "init"], check=True, capture_output=True)
         subprocess.run(["git", "add", "."], check=True, capture_output=True)
         subprocess.run(["git", "commit", "-m", "Initial commit from Specify template"], check=True, capture_output=True)
         if not quiet:
-            console.print("[green]✓[/green] Git repository initialized")
+            console.print(f"[green]✓[/green] {t('git.initialized')}")
         return True
         
     except subprocess.CalledProcessError as e:
         if not quiet:
-            console.print(f"[red]Error initializing git repository:[/red] {e}")
+            console.print(f"[red]{t('git.init_error', error=str(e))}[/red]")
         return False
     finally:
         os.chdir(original_cwd)
@@ -761,11 +784,11 @@ def init(
     
     # Validate arguments
     if here and project_name:
-        console.print("[red]Error:[/red] Cannot specify both project name and --here flag")
+        console.print(f"[red]Error:[/red] {t('project.no_both')}")
         raise typer.Exit(1)
     
     if not here and not project_name:
-        console.print("[red]Error:[/red] Must specify either a project name or use --here flag")
+        console.print(f"[red]Error:[/red] {t('project.name_required')}")
         raise typer.Exit(1)
     
     # Determine project directory
@@ -776,25 +799,25 @@ def init(
         # Check if current directory has any files
         existing_items = list(project_path.iterdir())
         if existing_items:
-            console.print(f"[yellow]Warning:[/yellow] Current directory is not empty ({len(existing_items)} items)")
-            console.print("[yellow]Template files will be merged with existing content and may overwrite existing files[/yellow]")
+            console.print(f"[yellow]Warning:[/yellow] {t('project.not_empty_warning', count=len(existing_items))}")
+            console.print(f"[yellow]{t('project.merge_warning')}[/yellow]")
             
             # Ask for confirmation
-            response = typer.confirm("Do you want to continue?")
+            response = typer.confirm(t('project.continue_prompt'))
             if not response:
-                console.print("[yellow]Operation cancelled[/yellow]")
+                console.print(f"[yellow]{t('common.operation_cancelled')}[/yellow]")
                 raise typer.Exit(0)
     else:
         project_path = Path(project_name).resolve()
         # Check if project directory already exists
         if project_path.exists():
-            console.print(f"[red]Error:[/red] Directory '{project_name}' already exists")
+            console.print(f"[red]Error:[/red] {t('project.directory_exists', name=project_name)}")
             raise typer.Exit(1)
     
     console.print(Panel.fit(
-        "[bold cyan]Specify Project Setup[/bold cyan]\n"
-        f"{'Initializing in current directory:' if here else 'Creating new project:'} [green]{project_path.name}[/green]"
-        + (f"\n[dim]Path: {project_path}[/dim]" if here else ""),
+        f"[bold cyan]{t('project.setup_title')}[/bold cyan]\n"
+        f"{t('project.initializing_current') if here else t('project.creating_new', name=project_path.name)} [green]{project_path.name}[/green]"
+        + (f"\n[dim]{t('project.path_info', path=project_path)}[/dim]" if here else ""),
         border_style="cyan"
     ))
     
@@ -803,19 +826,19 @@ def init(
     if not no_git:
         git_available = check_tool("git", "https://git-scm.com/downloads")
         if not git_available:
-            console.print("[yellow]Git not found - will skip repository initialization[/yellow]")
+            console.print(f"[yellow]{t('git.not_found_skip')}[/yellow]")
 
     # AI assistant selection
     if ai_assistant:
-        if ai_assistant not in AI_CHOICES:
-            console.print(f"[red]Error:[/red] Invalid AI assistant '{ai_assistant}'. Choose from: {', '.join(AI_CHOICES.keys())}")
+        if ai_assistant not in get_ai_choices():
+            console.print(f"[red]Error:[/red] {t('errors.invalid_ai', ai=ai_assistant, choices=', '.join(get_ai_choices().keys()))}")
             raise typer.Exit(1)
         selected_ai = ai_assistant
     else:
         # Use arrow-key selection interface
         selected_ai = select_with_arrows(
-            AI_CHOICES, 
-            "Choose your AI assistant:", 
+            get_ai_choices(), 
+            t("selection.choose_ai"), 
             "copilot"
         )
     
@@ -824,22 +847,22 @@ def init(
         agent_tool_missing = False
         if selected_ai == "claude":
             if not check_tool("claude", "Install from: https://docs.anthropic.com/en/docs/claude-code/setup"):
-                console.print("[red]Error:[/red] Claude CLI is required for Claude Code projects")
+                console.print(f"[red]Error:[/red] {t('errors.claude_required')}")
                 agent_tool_missing = True
         elif selected_ai == "gemini":
             if not check_tool("gemini", "Install from: https://github.com/google-gemini/gemini-cli"):
-                console.print("[red]Error:[/red] Gemini CLI is required for Gemini projects")
+                console.print(f"[red]Error:[/red] {t('errors.gemini_required')}")
                 agent_tool_missing = True
 
         if agent_tool_missing:
-            console.print("\n[red]Required AI tool is missing![/red]")
-            console.print("[yellow]Tip:[/yellow] Use --ignore-agent-tools to skip this check")
+            console.print(f"\n[red]{t('errors.missing_ai_tool')}[/red]")
+            console.print(f"[yellow]Tip:[/yellow] {t('errors.ignore_tools_tip')}")
             raise typer.Exit(1)
     
     # Determine script type (explicit, interactive, or OS default)
     if script_type:
-        if script_type not in SCRIPT_TYPE_CHOICES:
-            console.print(f"[red]Error:[/red] Invalid script type '{script_type}'. Choose from: {', '.join(SCRIPT_TYPE_CHOICES.keys())}")
+        if script_type not in get_script_type_choices():
+            console.print(f"[red]Error:[/red] {t('errors.invalid_script', script=script_type, choices=', '.join(get_script_type_choices().keys()))}")
             raise typer.Exit(1)
         selected_script = script_type
     else:
@@ -847,14 +870,14 @@ def init(
         default_script = "ps" if os.name == "nt" else "sh"
         # Provide interactive selection similar to AI if stdin is a TTY
         if sys.stdin.isatty():
-            selected_script = select_with_arrows(SCRIPT_TYPE_CHOICES, "Choose script type (or press Enter)", default_script)
+            selected_script = select_with_arrows(get_script_type_choices(), t("selection.choose_script"), default_script)
         else:
             selected_script = default_script
     
     # Determine language (explicit, interactive, or default)
     if language:
-        if language not in LANGUAGE_CHOICES:
-            console.print(f"[red]Error:[/red] Invalid language '{language}'. Choose from: {', '.join(LANGUAGE_CHOICES.keys())}")
+        if language not in get_language_choices():
+            console.print(f"[red]Error:[/red] {t('errors.invalid_language', language=language, choices=', '.join(get_language_choices().keys()))}")
             raise typer.Exit(1)
         selected_language = language
     else:
@@ -862,38 +885,41 @@ def init(
         default_language = "en"
         # Provide interactive selection if stdin is a TTY
         if sys.stdin.isatty():
-            selected_language = select_with_arrows(LANGUAGE_CHOICES, "Choose template language", default_language)
+            selected_language = select_with_arrows(get_language_choices(), t("selection.choose_language"), default_language)
         else:
             selected_language = default_language
     
-    console.print(f"[cyan]Selected AI assistant:[/cyan] {selected_ai}")
-    console.print(f"[cyan]Selected script type:[/cyan] {selected_script}")
-    console.print(f"[cyan]Selected language:[/cyan] {selected_language}")
+    # Set the selected language for i18n before showing results
+    set_language(selected_language)
+    
+    console.print(f"[cyan]{t('summary.selected_ai', ai=selected_ai)}[/cyan]")
+    console.print(f"[cyan]{t('summary.selected_script', script=selected_script)}[/cyan]")
+    console.print(f"[cyan]{t('summary.selected_language', language=selected_language)}[/cyan]")
     
     # Download and set up project
     # New tree-based progress (no emojis); include earlier substeps
-    tracker = StepTracker("Initialize Specify Project")
+    tracker = StepTracker(t('project.setup_title'))
     # Flag to allow suppressing legacy headings
     sys._specify_tracker_active = True
     # Pre steps recorded as completed before live rendering
-    tracker.add("precheck", "Check required tools")
-    tracker.complete("precheck", "ok")
-    tracker.add("ai-select", "Select AI assistant")
+    tracker.add("precheck", t("steps.precheck"))
+    tracker.complete("precheck", t("common.ok"))
+    tracker.add("ai-select", t("steps.ai_select"))
     tracker.complete("ai-select", f"{selected_ai}")
-    tracker.add("script-select", "Select script type")
+    tracker.add("script-select", t("steps.script_select"))
     tracker.complete("script-select", selected_script)
-    for key, label in [
-        ("fetch", "Fetch latest release"),
-        ("download", "Download template"),
-        ("extract", "Extract template"),
-        ("zip-list", "Archive contents"),
-        ("extracted-summary", "Extraction summary"),
-    ("chmod", "Ensure scripts executable"),
-        ("cleanup", "Cleanup"),
-        ("git", "Initialize git repository"),
-        ("final", "Finalize")
+    for key, label_key in [
+        ("fetch", "steps.fetch"),
+        ("download", "steps.download"),
+        ("extract", "steps.extract"),
+        ("zip-list", "steps.zip_list"),
+        ("extracted-summary", "steps.extracted_summary"),
+        ("chmod", "steps.chmod"),
+        ("cleanup", "steps.cleanup"),
+        ("git", "steps.git_init"),
+        ("final", "steps.finalize")
     ]:
-        tracker.add(key, label)
+        tracker.add(key, t(label_key))
 
     # Use transient so live tree is replaced by the final static render (avoids duplicate output)
     with Live(tracker.render(), console=console, refresh_per_second=8, transient=True) as live:
@@ -913,21 +939,21 @@ def init(
             if not no_git:
                 tracker.start("git")
                 if is_git_repo(project_path):
-                    tracker.complete("git", "existing repo detected")
+                    tracker.complete("git", t("git.existing_repo"))
                 elif git_available:
                     if init_git_repo(project_path, quiet=True):
-                        tracker.complete("git", "initialized")
+                        tracker.complete("git", t("git.initialized"))
                     else:
                         tracker.error("git", "init failed")
                 else:
-                    tracker.skip("git", "git not available")
+                    tracker.skip("git", t("git.not_available"))
             else:
-                tracker.skip("git", "--no-git flag")
+                tracker.skip("git", t("git.no_git_flag"))
 
-            tracker.complete("final", "project ready")
+            tracker.complete("final", t("project.ready"))
         except Exception as e:
             tracker.error("final", str(e))
-            console.print(Panel(f"Initialization failed: {e}", title="Failure", border_style="red"))
+            console.print(Panel(t("errors.initialization_failed", error=str(e)), title="Failure", border_style="red"))
             if debug:
                 _env_pairs = [
                     ("Python", sys.version.split()[0]),
@@ -946,37 +972,33 @@ def init(
 
     # Final static tree (ensures finished state visible after Live context ends)
     console.print(tracker.render())
-    console.print("\n[bold green]Project ready.[/bold green]")
+    console.print(f"\n[bold green]{t('summary.project_ready')}[/bold green]")
     
     # Boxed "Next steps" section
     steps_lines = []
     if not here:
-        steps_lines.append(f"1. [bold green]cd {project_name}[/bold green]")
+        steps_lines.append(f"1. [bold green]{t('next_steps.cd_project', name=project_name)}[/bold green]")
         step_num = 2
     else:
-        steps_lines.append("1. You're already in the project directory!")
+        steps_lines.append(f"1. {t('next_steps.already_in_dir')}")
         step_num = 2
 
     if selected_ai == "claude":
-        steps_lines.append(f"{step_num}. Open in Visual Studio Code and start using / commands with Claude Code")
-        steps_lines.append("   - Type / in any file to see available commands")
-        steps_lines.append("   - Use /specify to create specifications")
-        steps_lines.append("   - Use /plan to create implementation plans")
-        steps_lines.append("   - Use /tasks to generate tasks")
+        steps_lines.append(f"{step_num}. {t('next_steps.claude_instructions')}")
+        for cmd in t('next_steps.claude_commands'):
+            steps_lines.append(f"   - {cmd}")
     elif selected_ai == "gemini":
-        steps_lines.append(f"{step_num}. Use / commands with Gemini CLI")
-        steps_lines.append("   - Run gemini /specify to create specifications")
-        steps_lines.append("   - Run gemini /plan to create implementation plans")
-        steps_lines.append("   - Run gemini /tasks to generate tasks")
-        steps_lines.append("   - See GEMINI.md for all available commands")
+        steps_lines.append(f"{step_num}. {t('next_steps.gemini_instructions')}")
+        for cmd in t('next_steps.gemini_commands'):
+            steps_lines.append(f"   - {cmd}")
     elif selected_ai == "copilot":
-        steps_lines.append(f"{step_num}. Open in Visual Studio Code and use [bold cyan]/specify[/], [bold cyan]/plan[/], [bold cyan]/tasks[/] commands with GitHub Copilot")
+        steps_lines.append(f"{step_num}. {t('next_steps.copilot_instructions')}")
 
     # Removed script variant step (scripts are transparent to users)
     step_num += 1
-    steps_lines.append(f"{step_num}. Update [bold magenta]CONSTITUTION.md[/bold magenta] with your project's non-negotiable principles")
+    steps_lines.append(f"{step_num}. {t('next_steps.update_constitution')}")
 
-    steps_panel = Panel("\n".join(steps_lines), title="Next steps", border_style="cyan", padding=(1,2))
+    steps_panel = Panel("\n".join(steps_lines), title=t("next_steps.title"), border_style="cyan", padding=(1,2))
     console.print()  # blank line
     console.print(steps_panel)
     
@@ -990,14 +1012,14 @@ def check():
     console.print("[bold]Checking for installed tools...[/bold]\n")
 
     # Create tracker for checking tools
-    tracker = StepTracker("Check Available Tools")
+    tracker = StepTracker(t("tools.check_title"))
     
     # Add all tools we want to check
-    tracker.add("git", "Git version control")
-    tracker.add("claude", "Claude Code CLI")
-    tracker.add("gemini", "Gemini CLI")
-    tracker.add("code", "VS Code (for GitHub Copilot)")
-    tracker.add("cursor-agent", "Cursor IDE agent (optional)")
+    tracker.add("git", t("tools.git"))
+    tracker.add("claude", t("tools.claude"))
+    tracker.add("gemini", t("tools.gemini"))
+    tracker.add("code", t("tools.code"))
+    tracker.add("cursor-agent", t("tools.cursor_agent"))
     
     # Check each tool
     git_ok = check_tool_for_tracker("git", "https://git-scm.com/downloads", tracker)
@@ -1013,13 +1035,13 @@ def check():
     console.print(tracker.render())
     
     # Summary
-    console.print("\n[bold green]Specify CLI is ready to use![/bold green]")
+    console.print(f"\n[bold green]{t('summary.specify_ready')}[/bold green]")
     
     # Recommendations
     if not git_ok:
-        console.print("[dim]Tip: Install git for repository management[/dim]")
+        console.print(f"[dim]{t('summary.install_git_tip')}[/dim]")
     if not (claude_ok or gemini_ok):
-        console.print("[dim]Tip: Install an AI assistant for the best experience[/dim]")
+        console.print(f"[dim]{t('summary.install_ai_tip')}[/dim]")
 
 
 def main():

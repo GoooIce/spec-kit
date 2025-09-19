@@ -1,0 +1,154 @@
+{
+  "tagline": "Spec-Driven Development Toolkit",
+  "banner": {
+    "help_text": "Run 'specify --help' for usage information"
+  },
+  "common": {
+    "selection_cancelled": "Selection cancelled",
+    "selection_failed": "Selection failed",
+    "operation_cancelled": "Operation cancelled",
+    "done": "done",
+    "error": "error",
+    "pending": "pending",
+    "running": "running",
+    "skipped": "skipped",
+    "available": "available",
+    "not_found": "not found",
+    "ok": "ok"
+  },
+  "tools": {
+    "check_title": "Check Available Tools",
+    "git": "Git version control",
+    "claude": "Claude Code CLI",
+    "gemini": "Gemini CLI", 
+    "code": "VS Code (for GitHub Copilot)",
+    "cursor_agent": "Cursor IDE agent (optional)",
+    "not_found_template": "{tool} not found",
+    "install_with": "Install with: {hint}"
+  },
+  "project": {
+    "setup_title": "Specify Project Setup",
+    "creating_new": "Creating new project: {name}",
+    "initializing_current": "Initializing in current directory: {name}",
+    "path_info": "Path: {path}",
+    "ready": "Project ready",
+    "name_required": "Must specify either a project name or use --here flag",
+    "no_both": "Cannot specify both project name and --here flag",
+    "directory_exists": "Directory '{name}' already exists",
+    "not_empty_warning": "Current directory is not empty ({count} items)",
+    "merge_warning": "Template files will be merged with existing content and may overwrite existing files",
+    "continue_prompt": "Do you want to continue?"
+  },
+  "steps": {
+    "precheck": "Check required tools",
+    "ai_select": "Select AI assistant",
+    "script_select": "Select script type",
+    "fetch": "Fetch latest release",
+    "download": "Download template",
+    "extract": "Extract template",
+    "zip_list": "Archive contents",
+    "extracted_summary": "Extraction summary", 
+    "flatten": "Flatten nested directory",
+    "chmod": "Set script permissions recursively",
+    "cleanup": "Remove temporary archive",
+    "git_init": "Initialize git repository",
+    "finalize": "Finalize"
+  },
+  "git": {
+    "initializing": "Initializing git repository...",
+    "initialized": "Git repository initialized",
+    "init_error": "Error initializing git repository: {error}",
+    "not_found_skip": "Git not found - will skip repository initialization",
+    "existing_repo": "existing repo detected",
+    "not_available": "git not available",
+    "no_git_flag": "--no-git flag"
+  },
+  "download": {
+    "fetching_release": "Fetching latest release information...",
+    "found_template": "Found template: {filename}",
+    "size_info": "Size: {size:,} bytes",
+    "release_info": "Release: {tag}",
+    "downloading": "Downloading template...",
+    "download_error": "Error downloading template",
+    "extract_error": "Error extracting template",
+    "fetch_error": "Error fetching release information",
+    "no_matching_asset": "No matching release asset found for pattern: {pattern}",
+    "zip_contains": "ZIP contains {count} items",
+    "extracted_items": "Extracted {count} items to temp location",
+    "nested_structure": "Found nested directory structure",
+    "merged_current": "Template files merged into current directory",
+    "extracted_to": "Extracted {count} items to {path}:",
+    "flattened": "Flattened nested directory structure",
+    "downloading_progress": "Downloading..."
+  },
+  "selection": {
+    "choose_ai": "Choose your AI assistant:",
+    "choose_script": "Choose script type (or press Enter)",
+    "choose_language": "Choose template language",
+    "navigation_help": "Use ↑/↓ to navigate, Enter to select, Esc to cancel"
+  },
+  "ai_assistants": {
+    "claude": "Claude Code",
+    "gemini": "Gemini CLI",
+    "copilot": "GitHub Copilot", 
+    "cursor": "Cursor"
+  },
+  "script_types": {
+    "sh": "POSIX Shell (bash/zsh)",
+    "ps": "PowerShell"
+  },
+  "languages": {
+    "en": "English",
+    "zh": "中文 (Chinese)"
+  },
+  "errors": {
+    "command_error": "Error running command: {command}",
+    "exit_code": "Exit code: {code}",
+    "error_output": "Error output: {output}",
+    "invalid_ai": "Invalid AI assistant '{ai}'. Choose from: {choices}",
+    "invalid_script": "Invalid script type '{script}'. Choose from: {choices}",
+    "invalid_language": "Invalid language '{language}'. Choose from: {choices}",
+    "claude_required": "Claude CLI is required for Claude Code projects",
+    "gemini_required": "Gemini CLI is required for Gemini projects",
+    "missing_ai_tool": "Required AI tool is missing!",
+    "ignore_tools_tip": "Use --ignore-agent-tools to skip this check",
+    "initialization_failed": "Initialization failed: {error}"
+  },
+  "files": {
+    "merging_directory": "Merging directory: {name}",
+    "overwriting_file": "Overwriting file: {name}",
+    "updated_permissions": "Updated execute permissions on {count} script(s) recursively",
+    "permission_failures": "Some scripts could not be updated:",
+    "cleaned_up": "Cleaned up: {name}"
+  },
+  "next_steps": {
+    "title": "Next steps",
+    "cd_project": "cd {name}",
+    "already_in_dir": "You're already in the project directory!",
+    "claude_instructions": "Open in Visual Studio Code and start using / commands with Claude Code",
+    "claude_commands": [
+      "Type / in any file to see available commands",
+      "Use /specify to create specifications",
+      "Use /plan to create implementation plans", 
+      "Use /tasks to generate tasks"
+    ],
+    "gemini_instructions": "Use / commands with Gemini CLI",
+    "gemini_commands": [
+      "Run gemini /specify to create specifications",
+      "Run gemini /plan to create implementation plans",
+      "Run gemini /tasks to generate tasks",
+      "See GEMINI.md for all available commands"
+    ],
+    "copilot_instructions": "Open in Visual Studio Code and use /specify, /plan, /tasks commands with GitHub Copilot",
+    "update_constitution": "Update CONSTITUTION.md with your project's non-negotiable principles"
+  },
+  "summary": {
+    "selected_ai": "Selected AI assistant: {ai}",
+    "selected_script": "Selected script type: {script}",
+    "selected_language": "Selected language: {language}",
+    "project_ready": "Project ready.",
+    "specify_ready": "Specify CLI is ready to use!",
+    "install_git_tip": "Install git for repository management",
+    "install_ai_tip": "Install an AI assistant for the best experience"
+  }
+}
