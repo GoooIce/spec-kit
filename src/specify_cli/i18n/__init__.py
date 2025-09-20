@@ -114,16 +114,16 @@ class I18n:
         
         return current
     
-    def t(self, key: str, **kwargs) -> str:
+    def t(self, key: str, **kwargs):
         """
-        Get translated text.
+        Get translated content.
         
         Args:
             key: Translation key (supports dot notation for nested keys)
-            **kwargs: Parameters for string interpolation
+            **kwargs: Parameters for string interpolation (only applied to string content)
             
         Returns:
-            Translated and interpolated text, fallback to key if not found
+            Translated content (string, list, or dict), fallback to key if not found
         """
         # Get translations for current language
         current_translations = self.translations.get(self.current_language, {})
@@ -140,7 +140,7 @@ class I18n:
         if text is None:
             text = key
         
-        # Perform parameter interpolation
+        # Perform parameter interpolation only for string content
         if kwargs and isinstance(text, str):
             try:
                 text = text.format(**kwargs)
@@ -148,7 +148,7 @@ class I18n:
                 # If interpolation fails, return the original text
                 pass
         
-        return str(text)
+        return text
 
 
 # Global i18n instance
