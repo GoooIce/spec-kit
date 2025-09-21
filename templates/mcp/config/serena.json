@@ -1,0 +1,13 @@
+{
+  "serena": {
+    "command": "uv",
+    "args": [
+      "tool",
+      "run",
+      "serena-ai",
+      "start-mcp-server",
+      "--context",
+      "ide-assistant"
+    ]
+  }
+}
