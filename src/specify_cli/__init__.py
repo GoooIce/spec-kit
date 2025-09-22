@@ -37,11 +37,7 @@ from .i18n import t
 # Import command implementations
 from .commands import (
     init_command,
-    check_command,
-    mcp_list_command,
-    mcp_presets_command,
-    mcp_install_command,
-    mcp_recommend_command
+    check_command
 )
 
 # Create the main Typer app
@@ -52,13 +48,6 @@ app = typer.Typer(
     invoke_without_command=True,
     cls=BannerGroup,
 )
-
-# Create MCP subcommand group
-mcp_app = typer.Typer(
-    name="mcp",
-    help="Manage MCP (Model Context Protocol) tools and presets"
-)
-
 
 @app.callback()
 def callback(ctx: typer.Context):
@@ -110,42 +99,6 @@ def check():
     """Check that all required tools are installed."""
     check_command()
 
-
-# MCP subcommands
-@mcp_app.command("list")
-def mcp_list(
-    category: str = typer.Option(None, "--category", help="Filter by tool category"),
-    show_disabled: bool = typer.Option(False, "--show-disabled", help="Include disabled tools in output")
-):
-    """List available MCP tools."""
-    mcp_list_command(category=category, show_disabled=show_disabled)
-
-
-@mcp_app.command("presets")
-def mcp_presets():
-    """List available MCP tool presets."""
-    mcp_presets_command()
-
-
-@mcp_app.command("install")
-def mcp_install(
-    preset_name: str = typer.Argument(..., help="Name of the preset to install"),
-    project_path: str = typer.Option(None, "--project", help="Project path (defaults to current directory)")
-):
-    """Install MCP tools from a preset."""
-    mcp_install_command(preset_name=preset_name, project_path=project_path)
-
-
-@mcp_app.command("recommend")
-def mcp_recommend(
-    project_type: str = typer.Option(None, "--type", help="Project type (python, javascript, etc.)")
-):
-    """Get MCP tool recommendations for a project type."""
-    mcp_recommend_command(project_type=project_type)
-
-
-# Add MCP subcommand group to main app
-app.add_typer(mcp_app, name="mcp")
 
 
 def main():
