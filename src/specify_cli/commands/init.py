@@ -97,13 +97,6 @@ def init_command(
             console.print(f"[red]Error:[/red] {t('project.directory_exists', name=project_name)}")
             raise typer.Exit(1)
     
-    console.print(Panel.fit(
-        f"[bold cyan]{t('project.setup_title')}[/bold cyan]\n"
-        f"{t('project.initializing_current') if here else t('project.creating_new', name=project_path.name)} [green]{project_path.name}[/green]"
-        + (f"\n[dim]{t('project.path_info', path=project_path)}[/dim]" if here else ""),
-        border_style="cyan"
-    ))
-    
     # Check git only if we might need it (not --no-git)
     git_available = True
     if not no_git:
